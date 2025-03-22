@@ -30,6 +30,8 @@ import time
 import threading
 from typing import Any, Dict, List, Optional, Union, cast
 from collections import OrderedDict
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 import paho.mqtt.client as mqtt_client
 import pydantic
@@ -949,6 +951,18 @@ class RobotServer:
         self.push_telemetry = push_telemetry
         self.disable_request_factsheet = disable_request_factsheet
         self.telemetry_env = telemetry_env
+
+    
+        app = FastAPI()
+
+        # Add CORS middleware
+        app.add_middleware(
+            CORSMiddleware,
+            allow_origins=["*"],  # Allows all origins
+            allow_credentials=True,
+            allow_methods=["*"],  # Allows all methods
+            allow_headers=["*"],  # Allows all headers
+        )
 
     def _enqueue(self, queue, obj):
         asyncio.run_coroutine_threadsafe(queue.put(obj), self._event_loop)

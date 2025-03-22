@@ -713,3 +713,23 @@ Yes!
 ## License
 Isaac Mission Dispatch is under [Apache 2.0 license](https://github.com/NVIDIA-ISAAC/isaac_mission_dispatch/blob/main/LICENSE).
 
+
+```markdown
+## PostgreSQL Commands for Developers
+
+### 1. Stop PostgreSQL Service
+Use this command to stop the PostgreSQL database server:  
+```bash
+sudo systemctl stop postgresql
+```
+
+### 2. Check Active Connections on Port 5432
+Run this command to see which processes are using PostgreSQL's default port (5432):  
+```bash
+sudo lsof -i :5432
+```
+
+### Why These Commands?
+- **Stopping PostgreSQL** is useful when updating configurations, performing maintenance, or resolving port conflicts.  
+- **Checking active connections** helps identify processes that might be blocking the port or causing issues.  
+```

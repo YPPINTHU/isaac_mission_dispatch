@@ -25,10 +25,12 @@ import uuid
 import fastapi
 import pydantic
 import uvicorn
+from fastapi.middleware.cors import CORSMiddleware
 
 from cloud_common import objects
 from cloud_common.objects import common
 from cloud_common.objects.mission import MissionNodeV1
+from .cors_config import CORSConfig
 
 
 LIST_DESCRIPTION = "Returns a list of all {object_type} objects in the database."
@@ -110,13 +112,25 @@ class Database(abc.ABC):
 class WebServer:
     """ A webserver that hosts REST APIs for accessing a database of api objects """
 
-    def __init__(self, database: Database, args: argparse.Namespace):
-        self._database = database
-        self._address = args.address
-        self._port = args.port
-        self._controller_port = args.controller_port
-        self._root_path = args.root_path
-        self._access_log = args.access_log
+    def __init__(self, host: str = "localhost", port: int = 5000,
+                 controller_port: int = 5001, 
+                 cors_config: Optional[CORSConfig] = None):
+        
+        self._cors_config = cors_config or CORSConfig()
+        
+        # Create FastAPI app with CORS middleware
+        self._app = fastapi.FastAPI(title="Mission Database API")
+        
+        # Configure CORS middleware with more detailed settings
+        self._app.add_middleware(
+            CORSMiddleware,
+            allow_origins=self._cors_config.allowed_origins,
+            allow_credentials=self._cors_config.allow_credentials,
+            allow_methods=self._cors_config.allowed_methods,
+            allow_headers=self._cors_config.allowed_headers,
+            max_age=self._cors_config.max_age,
+            expose_headers=["*"]
+        )
 
     @classmethod
     def add_parser_args(cls, parser: argparse.ArgumentParser):
@@ -345,8 +359,8 @@ class WebServer:
                               response_model=None, methods=["DELETE"], tags=[class_name])
             app.add_api_route(f"/{class_name}", self._build_creator(obj),
                               description=CREATE_DESCRIPTION.format(
-                object_type=obj.__name__),
-                response_model=obj, methods=["POST"], tags=[class_name])
+                                  object_type=obj.__name__),
+                              response_model=obj, methods=["POST"], tags=[class_name])
 
     def _register_user_apis(self, app: fastapi.FastAPI):
         for class_name, obj in objects.USER_API_OBJECT_DICT.items():
